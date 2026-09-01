@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
 
 const features = [
   {
@@ -45,404 +46,713 @@ const roles = [
   },
 ];
 
-function Landing() {
-  return (
-    <main className="min-h-screen overflow-hidden bg-slate-950 text-white">
+const workflow = [
+  ["01", "Capture", "Create a customer lead."],
+  ["02", "Connect", "Contact and qualify the lead."],
+  ["03", "Quote", "Build a customized quote."],
+  ["04", "Close", "Accept or reject the deal."],
+];
 
-      {/* Navbar */}
-      <header className="border-b border-slate-800/70">
+/* =========================================================
+   LAZY REVEAL COMPONENT
+========================================================= */
+
+function Reveal({
+  children,
+  className = "",
+  delay = 0,
+}) {
+  const ref = useRef(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const element = ref.current;
+
+    if (!element) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.unobserve(element);
+        }
+      },
+      {
+        threshold: 0.12,
+        rootMargin: "0px 0px -50px 0px",
+      }
+    );
+
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className={`transition-all duration-700 ease-out ${
+        visible
+          ? "translate-y-0 opacity-100"
+          : "translate-y-8 opacity-0"
+      } ${className}`}
+      style={{
+        transitionDelay: `${delay}ms`,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function Landing() {
+  /* =========================================================
+     SMOOTH NAVIGATION
+  ========================================================= */
+
+  const scrollToSection = (id) => {
+    const element = document.getElementById(id);
+
+    if (!element) return;
+
+    const navbarOffset = 80;
+
+    const elementPosition =
+      element.getBoundingClientRect().top +
+      window.scrollY -
+      navbarOffset;
+
+    window.scrollTo({
+      top: elementPosition,
+      behavior: "smooth",
+    });
+  };
+
+  return (
+    <main className="min-h-screen overflow-hidden bg-black text-white selection:bg-white selection:text-black">
+
+      {/* =====================================================
+          NAVBAR
+      ===================================================== */}
+
+      <header className="sticky top-0 z-50 border-b border-white/[0.08] bg-black/85 backdrop-blur-xl">
+
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-5 sm:px-8">
+
+          {/* Logo */}
 
           <Link
             to="/"
-            className="text-2xl font-bold tracking-tight"
+            className="group text-2xl font-bold tracking-tight"
           >
-            Lead<span className="text-indigo-400">MS</span>
+            Lead
+            <span className="text-neutral-300 transition group-hover:text-white">
+              MS
+            </span>
           </Link>
 
-          <nav className="hidden items-center gap-8 text-sm text-slate-400 md:flex">
-            <a
-              href="#features"
+          {/* Navigation */}
+
+          <nav className="hidden items-center gap-8 text-sm text-neutral-500 md:flex">
+
+            <button
+              type="button"
+              onClick={() => scrollToSection("features")}
               className="transition hover:text-white"
             >
               Features
-            </a>
+            </button>
 
-            <a
-              href="#roles"
+            <button
+              type="button"
+              onClick={() => scrollToSection("roles")}
               className="transition hover:text-white"
             >
               Roles
-            </a>
+            </button>
 
-            <a
-              href="#workflow"
+            <button
+              type="button"
+              onClick={() => scrollToSection("workflow")}
               className="transition hover:text-white"
             >
               Workflow
-            </a>
+            </button>
+
           </nav>
 
+          {/* Actions */}
+
           <div className="flex items-center gap-3">
+
             <Link
               to="/login"
-              className="hidden rounded-lg px-4 py-2.5 text-sm font-medium text-slate-300 transition hover:text-white sm:block"
+              className="hidden rounded-lg px-4 py-2.5 text-sm font-medium text-neutral-400 transition hover:text-white sm:block"
             >
               Sign in
             </Link>
 
             <Link
               to="/register"
-              className="rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-semibold transition hover:bg-indigo-400"
+              className="rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-black transition hover:bg-neutral-200"
             >
               Get started
             </Link>
+
           </div>
+
         </div>
+
       </header>
 
-      {/* Hero */}
+      {/* =====================================================
+          HERO
+      ===================================================== */}
+
       <section className="relative">
+
         {/* Background glow */}
-        <div className="pointer-events-none absolute left-1/2 top-0 h-[500px] w-[700px] -translate-x-1/2 rounded-full bg-indigo-500/10 blur-[120px]" />
 
-        <div className="relative mx-auto grid max-w-7xl gap-16 px-5 pb-24 pt-24 sm:px-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:pb-32 lg:pt-32">
+        <div className="pointer-events-none absolute left-1/2 top-0 h-[420px] w-[650px] -translate-x-1/2 rounded-full bg-white/[0.035] blur-[140px]" />
 
-          {/* Hero copy */}
-          <div>
-            <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/5 px-3 py-1.5 text-xs font-medium text-indigo-300">
-              <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
-              Smarter sales management
+        <div className="relative mx-auto grid max-w-7xl gap-12 px-5 pb-24 pt-12 sm:px-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-14 lg:pb-28 lg:pt-14">
+
+          {/* =================================================
+              HERO LEFT
+          ================================================= */}
+
+          <Reveal>
+
+            <div>
+
+              {/* Badge */}
+
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/[0.12] bg-white/[0.035] px-3.5 py-1.5 text-xs font-medium text-neutral-300">
+
+                <span className="h-1.5 w-1.5 rounded-full bg-white" />
+
+                Smarter sales management
+
+              </div>
+
+              {/* Heading */}
+
+              <h1 className="max-w-4xl text-5xl font-semibold leading-[1.02] tracking-[-0.05em] sm:text-6xl lg:text-7xl">
+
+                Manage leads.
+                <br />
+
+                Close deals.
+                <br />
+
+                <span className="text-neutral-500">
+                  Grow faster.
+                </span>
+
+              </h1>
+
+              {/* Description */}
+
+              <p className="mt-6 max-w-2xl text-base leading-7 text-neutral-500 sm:text-lg">
+                LeadMS brings products, leads, sales teams, and
+                customer quotations together in one powerful
+                workspace.
+              </p>
+
+              {/* Buttons */}
+
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+
+                <Link
+                  to="/register"
+                  className="group inline-flex items-center justify-center rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-black transition hover:bg-neutral-200"
+                >
+                  Get started
+
+                  <span className="ml-2 transition-transform group-hover:translate-x-1">
+                    →
+                  </span>
+
+                </Link>
+
+                <Link
+                  to="/login"
+                  className="inline-flex items-center justify-center rounded-xl border border-white/[0.12] bg-white/[0.02] px-6 py-3.5 text-sm font-semibold text-neutral-300 transition hover:border-white/25 hover:bg-white/[0.06] hover:text-white"
+                >
+                  Sign in
+                </Link>
+
+              </div>
+
+              {/* Features */}
+
+              <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-xs text-neutral-600">
+
+                <span>✓ Product management</span>
+
+                <span>✓ Lead pipeline</span>
+
+                <span>✓ Smart quotations</span>
+
+              </div>
+
             </div>
 
-            <h1 className="max-w-4xl text-5xl font-bold leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl">
-              Manage leads.
-              <br />
-              Close deals.
-              <br />
-              <span className="text-indigo-400">
-                Grow faster.
-              </span>
-            </h1>
+          </Reveal>
 
-            <p className="mt-7 max-w-2xl text-base leading-7 text-slate-400 sm:text-lg">
-              LeadMS brings products, leads, sales teams, and
-              customer quotations together in one powerful
-              workspace.
-            </p>
+          {/* =================================================
+              DASHBOARD PREVIEW
+          ================================================= */}
 
-            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <Link
-                to="/register"
-                className="inline-flex items-center justify-center rounded-xl bg-indigo-500 px-6 py-3.5 text-sm font-semibold transition hover:bg-indigo-400"
-              >
-                Get started
-                <span className="ml-2">→</span>
-              </Link>
+          <Reveal
+            delay={120}
+            className="relative"
+          >
 
-              <Link
-                to="/login"
-                className="inline-flex items-center justify-center rounded-xl border border-slate-700 px-6 py-3.5 text-sm font-semibold text-slate-300 transition hover:border-slate-600 hover:bg-slate-900 hover:text-white"
-              >
-                Sign in
-              </Link>
-            </div>
+            <div className="absolute -inset-6 rounded-[2rem] bg-white/[0.025] blur-3xl" />
 
-            <div className="mt-10 flex flex-wrap gap-x-6 gap-y-3 text-xs text-slate-500">
-              <span>✓ Product management</span>
-              <span>✓ Lead pipeline</span>
-              <span>✓ Smart quotations</span>
-            </div>
-          </div>
+            <div className="relative overflow-hidden rounded-2xl border border-white/[0.10] bg-[#090909] shadow-2xl">
 
-          {/* Dashboard preview */}
-          <div className="relative">
-            <div className="absolute -inset-4 rounded-3xl bg-indigo-500/5 blur-2xl" />
+              {/* Browser bar */}
 
-            <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl">
+              <div className="flex items-center justify-between border-b border-white/[0.08] px-5 py-4">
 
-              {/* Fake browser bar */}
-              <div className="flex items-center gap-2 border-b border-slate-800 px-5 py-4">
-                <span className="h-2.5 w-2.5 rounded-full bg-slate-700" />
-                <span className="h-2.5 w-2.5 rounded-full bg-slate-700" />
-                <span className="h-2.5 w-2.5 rounded-full bg-slate-700" />
+                <div className="flex items-center gap-2">
+
+                  <span className="h-2.5 w-2.5 rounded-full bg-neutral-700" />
+
+                  <span className="h-2.5 w-2.5 rounded-full bg-neutral-700" />
+
+                  <span className="h-2.5 w-2.5 rounded-full bg-neutral-700" />
+
+                </div>
+
+                <span className="text-[10px] text-neutral-600">
+                  app.leadms.com
+                </span>
+
               </div>
 
               <div className="p-5 sm:p-6">
 
+                {/* Dashboard header */}
+
                 <div className="flex items-center justify-between">
+
                   <div>
-                    <p className="text-[10px] text-indigo-400">
+
+                    <p className="text-[10px] uppercase tracking-widest text-neutral-600">
                       Overview
                     </p>
 
                     <p className="mt-1 text-lg font-semibold">
                       Dashboard
                     </p>
+
                   </div>
 
-                  <div className="h-8 w-8 rounded-full bg-indigo-500/15" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-xs">
+                    U
+                  </div>
+
                 </div>
 
-                {/* Preview stats */}
+                {/* Stats */}
+
                 <div className="mt-6 grid grid-cols-2 gap-3">
+
                   {[
                     ["Leads", "24"],
                     ["Quotes", "12"],
                     ["Revenue", "₹1.24L"],
                     ["Products", "48"],
-                  ].map(([label, value]) => (
-                    <div
-                      key={label}
-                      className="rounded-xl border border-slate-800 bg-slate-950/60 p-4"
-                    >
-                      <p className="text-[10px] text-slate-500">
-                        {label}
-                      </p>
+                  ].map(([label, value], index) => (
 
-                      <p className="mt-2 text-lg font-bold">
-                        {value}
-                      </p>
-                    </div>
+                    <Reveal
+                      key={label}
+                      delay={180 + index * 70}
+                    >
+
+                      <div className="rounded-xl border border-white/[0.08] bg-black p-4 transition hover:border-white/[0.18]">
+
+                        <p className="text-[10px] uppercase tracking-wider text-neutral-600">
+                          {label}
+                        </p>
+
+                        <p className="mt-2 text-lg font-semibold">
+                          {value}
+                        </p>
+
+                      </div>
+
+                    </Reveal>
+
                   ))}
+
                 </div>
 
-                {/* Pipeline preview */}
-                <div className="mt-4 rounded-xl border border-slate-800 bg-slate-950/60 p-4">
+                {/* Pipeline */}
+
+                <div className="mt-4 rounded-xl border border-white/[0.08] bg-black p-4">
+
                   <div className="flex items-center justify-between">
+
                     <p className="text-xs font-medium">
                       Sales pipeline
                     </p>
 
-                    <span className="text-[10px] text-slate-500">
+                    <span className="text-[10px] text-neutral-600">
                       This month
                     </span>
+
                   </div>
 
-                  <div className="mt-5 flex items-end gap-2">
+                  <div className="mt-5 flex h-24 items-end gap-2">
+
                     {[55, 72, 45, 85, 65, 92, 78].map(
                       (height, index) => (
+
                         <div
                           key={index}
-                          className="flex-1 rounded-t-md bg-indigo-500/40"
+                          className="flex-1 rounded-t-md bg-white/[0.18] transition-all duration-500 hover:bg-white/[0.35]"
                           style={{
-                            height: `${height}px`,
+                            height: `${height}%`,
                           }}
                         />
+
                       )
                     )}
+
                   </div>
+
+                </div>
+
+                {/* Performance */}
+
+                <div className="mt-4 flex items-center justify-between rounded-xl border border-white/[0.08] bg-white/[0.025] px-4 py-3">
+
+                  <div>
+
+                    <p className="text-xs font-medium">
+                      Pipeline performance
+                    </p>
+
+                    <p className="mt-1 text-[10px] text-neutral-600">
+                      Compared with last month
+                    </p>
+
+                  </div>
+
+                  <span className="text-xs font-semibold">
+                    +18.4%
+                  </span>
+
                 </div>
 
               </div>
+
             </div>
-          </div>
+
+          </Reveal>
+
         </div>
+
       </section>
 
-      {/* Features */}
+      {/* =====================================================
+          FEATURES
+      ===================================================== */}
+
       <section
         id="features"
-        className="border-y border-slate-800/70 bg-slate-900/30"
+        className="scroll-mt-20 border-y border-white/[0.06]"
       >
+
         <div className="mx-auto max-w-7xl px-5 py-24 sm:px-8">
 
-          <div className="max-w-2xl">
-            <p className="text-sm font-medium text-indigo-400">
-              Everything in one place
-            </p>
+          <Reveal>
 
-            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-              Everything your sales team needs.
-            </h2>
+            <div className="max-w-2xl">
 
-            <p className="mt-4 text-sm leading-6 text-slate-400 sm:text-base">
-              From the first customer inquiry to the final
-              quotation, LeadMS keeps your workflow organized.
-            </p>
-          </div>
+              <p className="text-sm font-medium text-neutral-400">
+                Everything in one place
+              </p>
+
+              <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">
+                Everything your sales team needs.
+              </h2>
+
+              <p className="mt-4 text-sm leading-6 text-neutral-500 sm:text-base">
+                From the first customer inquiry to the final
+                quotation, LeadMS keeps your workflow organized.
+              </p>
+
+            </div>
+
+          </Reveal>
 
           <div className="mt-12 grid gap-5 md:grid-cols-3">
-            {features.map((feature) => (
-              <article
+
+            {features.map((feature, index) => (
+
+              <Reveal
                 key={feature.number}
-                className="group rounded-2xl border border-slate-800 bg-slate-950/50 p-6 transition duration-200 hover:-translate-y-1 hover:border-slate-700"
+                delay={index * 100}
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400">
-                    {feature.icon}
+
+                <article className="group h-full rounded-2xl border border-white/[0.08] bg-[#080808] p-6 transition duration-300 hover:-translate-y-1 hover:border-white/[0.18] hover:bg-[#0c0c0c]">
+
+                  <div className="flex items-start justify-between">
+
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.04] text-lg text-white">
+                      {feature.icon}
+                    </div>
+
+                    <span className="text-xs text-neutral-700">
+                      {feature.number}
+                    </span>
+
                   </div>
 
-                  <span className="text-xs text-slate-600">
-                    {feature.number}
-                  </span>
-                </div>
-
-                <h3 className="mt-7 text-lg font-semibold">
-                  {feature.title}
-                </h3>
-
-                <p className="mt-3 text-sm leading-6 text-slate-400">
-                  {feature.description}
-                </p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Roles */}
-      <section
-        id="roles"
-        className="mx-auto max-w-7xl px-5 py-24 sm:px-8"
-      >
-        <div className="max-w-2xl">
-          <p className="text-sm font-medium text-indigo-400">
-            One platform. Every role.
-          </p>
-
-          <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-            Built around your team.
-          </h2>
-
-          <p className="mt-4 text-sm leading-6 text-slate-400 sm:text-base">
-            Every role gets the tools and workflows they need
-            without unnecessary complexity.
-          </p>
-        </div>
-
-        <div className="mt-12 grid gap-5 md:grid-cols-3">
-          {roles.map((item, index) => (
-            <article
-              key={item.role}
-              className={`rounded-2xl border p-7 ${
-                index === 1
-                  ? "border-indigo-500/30 bg-indigo-500/5"
-                  : "border-slate-800 bg-slate-900/40"
-              }`}
-            >
-              <p className="text-xs font-medium uppercase tracking-widest text-slate-500">
-                0{index + 1}
-              </p>
-
-              <h3 className="mt-6 text-2xl font-bold">
-                {item.role}
-              </h3>
-
-              <p className="mt-4 text-sm leading-6 text-slate-400">
-                {item.description}
-              </p>
-
-              <div className="mt-7 border-t border-slate-800 pt-5 text-sm font-medium text-indigo-400">
-                {item.action} →
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      {/* Workflow */}
-      <section
-        id="workflow"
-        className="border-y border-slate-800/70 bg-slate-900/30"
-      >
-        <div className="mx-auto max-w-7xl px-5 py-24 sm:px-8">
-
-          <div className="text-center">
-            <p className="text-sm font-medium text-indigo-400">
-              Simple workflow
-            </p>
-
-            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-              From inquiry to deal.
-            </h2>
-          </div>
-
-          <div className="mx-auto mt-14 flex max-w-4xl flex-col items-center justify-between gap-8 md:flex-row md:gap-4">
-            {[
-              ["01", "Capture", "Create a customer lead."],
-              ["02", "Connect", "Contact and qualify the lead."],
-              ["03", "Quote", "Build a customized quote."],
-              ["04", "Close", "Accept or reject the deal."],
-            ].map(([number, title, description], index) => (
-              <div
-                key={number}
-                className="flex w-full items-center md:w-auto"
-              >
-                <div className="text-center md:w-40">
-                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-indigo-500/30 bg-indigo-500/10 text-sm font-semibold text-indigo-400">
-                    {number}
-                  </div>
-
-                  <h3 className="mt-4 font-semibold">
-                    {title}
+                  <h3 className="mt-7 text-lg font-semibold">
+                    {feature.title}
                   </h3>
 
-                  <p className="mt-2 text-xs leading-5 text-slate-500">
-                    {description}
+                  <p className="mt-3 text-sm leading-6 text-neutral-500">
+                    {feature.description}
                   </p>
+
+                  <div className="mt-7 h-px bg-white/[0.06]" />
+
+                  <div className="mt-4 text-xs font-medium text-neutral-600 transition group-hover:text-neutral-300">
+                    Explore feature →
+                  </div>
+
+                </article>
+
+              </Reveal>
+
+            ))}
+
+          </div>
+
+        </div>
+
+      </section>
+
+      {/* =====================================================
+          ROLES
+      ===================================================== */}
+
+      <section
+        id="roles"
+        className="scroll-mt-20 mx-auto max-w-7xl px-5 py-24 sm:px-8"
+      >
+
+        <Reveal>
+
+          <div className="max-w-2xl">
+
+            <p className="text-sm font-medium text-neutral-400">
+              One platform. Every role.
+            </p>
+
+            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">
+              Built around your team.
+            </h2>
+
+            <p className="mt-4 text-sm leading-6 text-neutral-500 sm:text-base">
+              Every role gets the tools and workflows they need
+              without unnecessary complexity.
+            </p>
+
+          </div>
+
+        </Reveal>
+
+        <div className="mt-12 grid gap-5 md:grid-cols-3">
+
+          {roles.map((item, index) => (
+
+            <Reveal
+              key={item.role}
+              delay={index * 100}
+            >
+
+              <article className="group h-full rounded-2xl border border-white/[0.08] bg-[#080808] p-7 transition duration-300 hover:-translate-y-1 hover:border-white/[0.18]">
+
+                <div className="flex items-center justify-between">
+
+                  <p className="text-xs font-medium uppercase tracking-[0.2em] text-neutral-700">
+                    0{index + 1}
+                  </p>
+
+                  <span className="text-neutral-700 transition group-hover:text-white">
+                    ↗
+                  </span>
+
                 </div>
 
-                {index < 3 && (
-                  <div className="mx-4 hidden h-px w-12 bg-slate-800 md:block" />
-                )}
-              </div>
-            ))}
+                <h3 className="mt-8 text-2xl font-semibold">
+                  {item.role}
+                </h3>
+
+                <p className="mt-4 text-sm leading-6 text-neutral-500">
+                  {item.description}
+                </p>
+
+                <div className="mt-7 border-t border-white/[0.07] pt-5 text-sm font-medium text-neutral-400 transition group-hover:text-white">
+                  {item.action} →
+                </div>
+
+              </article>
+
+            </Reveal>
+
+          ))}
+
+        </div>
+
+      </section>
+
+      {/* =====================================================
+          WORKFLOW
+      ===================================================== */}
+
+      <section
+        id="workflow"
+        className="scroll-mt-20 border-y border-white/[0.06] bg-[#050505]"
+      >
+
+        <div className="mx-auto max-w-7xl px-5 py-24 sm:px-8">
+
+          <Reveal>
+
+            <div className="text-center">
+
+              <p className="text-sm font-medium text-neutral-400">
+                Simple workflow
+              </p>
+
+              <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">
+                From inquiry to deal.
+              </h2>
+
+            </div>
+
+          </Reveal>
+
+          <div className="mx-auto mt-14 grid max-w-5xl gap-5 md:grid-cols-4">
+
+            {workflow.map(
+              ([number, title, description], index) => (
+
+                <Reveal
+                  key={number}
+                  delay={index * 100}
+                >
+
+                  <div className="group relative rounded-2xl border border-white/[0.07] bg-black p-6 text-center transition hover:border-white/[0.18]">
+
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.04] text-sm font-semibold transition group-hover:bg-white group-hover:text-black">
+                      {number}
+                    </div>
+
+                    <h3 className="mt-5 font-semibold">
+                      {title}
+                    </h3>
+
+                    <p className="mt-2 text-xs leading-5 text-neutral-600">
+                      {description}
+                    </p>
+
+                  </div>
+
+                </Reveal>
+
+              )
+            )}
+
           </div>
+
         </div>
+
       </section>
 
-      {/* CTA */}
+      {/* =====================================================
+          CTA
+      ===================================================== */}
+
       <section className="relative overflow-hidden">
-        <div className="pointer-events-none absolute left-1/2 top-1/2 h-80 w-80 -translate-x-1/2 -translate-y-1/2 rounded-full bg-indigo-500/10 blur-[100px]" />
 
-        <div className="relative mx-auto max-w-4xl px-5 py-28 text-center sm:px-8">
-          <p className="text-sm font-medium text-indigo-400">
-            Ready to get started?
-          </p>
+        <div className="pointer-events-none absolute left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/[0.025] blur-[130px]" />
 
-          <h2 className="mt-4 text-4xl font-bold tracking-tight sm:text-5xl">
-            Simplify your sales workflow.
-          </h2>
+        <Reveal>
 
-          <p className="mx-auto mt-5 max-w-xl text-sm leading-6 text-slate-400 sm:text-base">
-            Bring your products, leads, team, and quotations
-            together with LeadMS.
-          </p>
+          <div className="relative mx-auto max-w-4xl px-5 py-28 text-center sm:px-8">
 
-          <Link
-            to="/register"
-            className="mt-8 inline-flex items-center rounded-xl bg-indigo-500 px-7 py-3.5 text-sm font-semibold transition hover:bg-indigo-400"
-          >
-            Create your account
-            <span className="ml-2">→</span>
-          </Link>
-        </div>
+            <p className="text-sm font-medium text-neutral-400">
+              Ready to get started?
+            </p>
+
+            <h2 className="mt-4 text-4xl font-semibold tracking-[-0.04em] sm:text-5xl">
+              Simplify your sales workflow.
+            </h2>
+
+            <p className="mx-auto mt-5 max-w-xl text-sm leading-6 text-neutral-500 sm:text-base">
+              Bring your products, leads, team, and quotations
+              together with LeadMS.
+            </p>
+
+            <Link
+              to="/register"
+              className="group mt-8 inline-flex items-center rounded-xl bg-white px-7 py-3.5 text-sm font-semibold text-black transition hover:bg-neutral-200"
+            >
+              Create your account
+
+              <span className="ml-2 transition-transform group-hover:translate-x-1">
+                →
+              </span>
+            </Link>
+
+          </div>
+
+        </Reveal>
+
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-800">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-8 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+      {/* =====================================================
+          FOOTER
+      ===================================================== */}
+
+      <footer className="border-t border-white/[0.08]">
+
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-5 py-8 text-xs text-neutral-600 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+
           <p>
             © 2026 LeadMS. All rights reserved.
           </p>
 
           <div className="flex gap-5">
+
             <Link
               to="/login"
-              className="transition hover:text-slate-300"
+              className="transition hover:text-white"
             >
               Sign in
             </Link>
 
             <Link
               to="/register"
-              className="transition hover:text-slate-300"
+              className="transition hover:text-white"
             >
               Get started
             </Link>
+
           </div>
+
         </div>
+
       </footer>
 
     </main>
