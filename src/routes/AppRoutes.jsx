@@ -7,6 +7,7 @@ import ForgotPassword from "../pages/ForgotPassword";
 import Dashboard from "../pages/Dashboard";
 import ProtectedRoute from "./ProtectedRoute";
 import DashboardLayout from "../layouts/DashboardLayout";
+import ResetPassword from "../pages/ResetPassword";
 
 import TraderProducts from "../pages/TraderProducts";
 import AvailableProducts from "../pages/AvailableProducts";
@@ -29,11 +30,16 @@ function AppRoutes() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route
-          path="/forgot-password"
-          element={<ForgotPassword />}
-        />
+       
+<Route
+  path="/forgot-password"
+  element={<ForgotPassword />}
+/>
 
+<Route
+  path="/reset-password"
+  element={<ResetPassword />}
+/>
         {/* Protected */}
         <Route element={<ProtectedRoute />}>
           <Route element={<DashboardLayout />}>
