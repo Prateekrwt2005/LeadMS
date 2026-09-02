@@ -125,6 +125,11 @@ function Landing() {
       "leadms-theme",
       darkMode ? "dark" : "light"
     );
+
+    document.documentElement.setAttribute(
+      "data-theme",
+      darkMode ? "dark" : "light"
+    );
   }, [darkMode]);
 
   /* =========================================================
@@ -211,9 +216,7 @@ function Landing() {
           {/* Navigation */}
 
           <nav
-            className={`hidden items-center gap-8 text-sm md:flex ${
-              mutedText
-            }`}
+            className={`hidden items-center gap-8 text-sm md:flex ${mutedText}`}
           >
             <button
               type="button"
@@ -244,7 +247,9 @@ function Landing() {
 
           <div className="flex items-center gap-2 sm:gap-3">
 
-            {/* Theme Toggle */}
+            {/* =================================================
+                THEME TOGGLE
+            ================================================= */}
 
             <button
               type="button"
@@ -254,21 +259,21 @@ function Landing() {
                   ? "Switch to light mode"
                   : "Switch to dark mode"
               }
-              className={`group relative flex h-10 w-10 items-center justify-center rounded-xl border transition-all duration-300 hover:scale-105 active:scale-95 ${
+              className={`group relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border transition-all duration-300 hover:scale-105 active:scale-95 ${
                 darkMode
                   ? "border-white/10 bg-white/[0.04] hover:bg-white/[0.09]"
                   : "border-black/10 bg-black/[0.03] hover:bg-black/[0.07]"
               }`}
             >
               <span
-                className={`text-base transition-all duration-300 ${
-                  darkMode
-                    ? "rotate-0 opacity-100"
-                    : "rotate-90 opacity-100"
-                }`}
-              >
-                {darkMode ? "☀" : "☾"}
-              </span>
+  className={`block text-base leading-none transition-all duration-500 ease-out ${
+    darkMode
+      ? "rotate-0 opacity-100"
+      : "-rotate-[7deg] opacity-100"
+  }`}
+>
+  {darkMode ? "☀" : "☾"}
+</span>
             </button>
 
             <Link
@@ -302,8 +307,6 @@ function Landing() {
 
       <section className="relative">
 
-        {/* Animated background */}
-
         <div
           className={`pointer-events-none absolute left-1/2 top-0 h-[420px] w-[650px] -translate-x-1/2 rounded-full blur-[140px] animate-pulse ${
             darkMode
@@ -319,8 +322,6 @@ function Landing() {
           <Reveal>
             <div>
 
-              {/* Badge */}
-
               <div
                 className={`mb-6 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors ${
                   darkMode
@@ -332,8 +333,6 @@ function Landing() {
 
                 Smarter sales management
               </div>
-
-              {/* Heading */}
 
               <h1 className="max-w-4xl text-5xl font-semibold leading-[1.02] tracking-[-0.05em] sm:text-6xl lg:text-7xl">
                 Manage leads.
@@ -347,8 +346,6 @@ function Landing() {
                 </span>
               </h1>
 
-              {/* Description */}
-
               <p
                 className={`mt-6 max-w-2xl text-base leading-7 sm:text-lg ${mutedText}`}
               >
@@ -356,8 +353,6 @@ function Landing() {
                 customer quotations together in one powerful
                 workspace.
               </p>
-
-              {/* Buttons */}
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
 
@@ -387,8 +382,6 @@ function Landing() {
                   Sign in
                 </Link>
               </div>
-
-              {/* Features */}
 
               <div
                 className={`mt-8 flex flex-wrap gap-x-6 gap-y-3 text-xs ${
@@ -427,8 +420,6 @@ function Landing() {
               }`}
             >
 
-              {/* Browser bar */}
-
               <div
                 className={`flex items-center justify-between border-b px-5 py-4 ${
                   darkMode
@@ -454,8 +445,6 @@ function Landing() {
               </div>
 
               <div className="p-5 sm:p-6">
-
-                {/* Dashboard header */}
 
                 <div className="flex items-center justify-between">
                   <div>
@@ -484,8 +473,6 @@ function Landing() {
                     U
                   </div>
                 </div>
-
-                {/* Stats */}
 
                 <div className="mt-6 grid grid-cols-2 gap-3">
                   {[
@@ -522,8 +509,6 @@ function Landing() {
                     </Reveal>
                   ))}
                 </div>
-
-                {/* Pipeline */}
 
                 <div
                   className={`mt-4 rounded-xl border p-4 ${
@@ -570,8 +555,6 @@ function Landing() {
                   </div>
                 </div>
 
-                {/* Performance */}
-
                 <div
                   className={`mt-4 flex items-center justify-between rounded-xl border px-4 py-3 ${
                     darkMode
@@ -599,6 +582,7 @@ function Landing() {
                     +18.4%
                   </span>
                 </div>
+
               </div>
             </div>
           </Reveal>

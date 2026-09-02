@@ -18,9 +18,10 @@ const useAuthStore = create(
         });
       },
 
-      updateAccessToken: (accessToken) => {
+      updateTokens: (accessToken, refreshToken) => {
         set({
           accessToken,
+          ...(refreshToken ? { refreshToken } : {}),
         });
       },
 

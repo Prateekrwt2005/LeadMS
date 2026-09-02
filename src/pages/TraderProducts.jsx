@@ -4,7 +4,12 @@ import api from "../services/api";
 function TraderProducts() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+
   const [creating, setCreating] = useState(false);
+  const [updating, setUpdating] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
+
+  const [editingId, setEditingId] = useState(null);
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -16,6 +21,10 @@ function TraderProducts() {
     basePrice: "",
     isActive: true,
   });
+
+  // ============================================================
+  // FETCH PRODUCTS
+  // ============================================================
 
   const fetchProducts = async () => {
     try {
@@ -39,33 +48,55 @@ function TraderProducts() {
     fetchProducts();
   }, []);
 
+  // ============================================================
+  // FORM CHANGE
+  // ============================================================
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
 
     setForm((current) => ({
       ...current,
-      [name]:
-        type === "checkbox"
-          ? checked
-          : value,
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
+
+  // ============================================================
+  // CREATE / UPDATE PRODUCT
+  // ============================================================
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      setCreating(true);
       setError("");
       setSuccess("");
 
-      await api.post("/products/trader", {
+      const payload = {
         name: form.name.trim(),
         description: form.description.trim(),
         basePrice: Number(form.basePrice),
         isActive: form.isActive,
-      });
+      };
 
+      if (editingId) {
+        setUpdating(true);
+
+        await api.put(
+          `/products/trader/${editingId}`,
+          payload
+        );
+
+        setSuccess("Product updated successfully.");
+      } else {
+        setCreating(true);
+
+        await api.post("/products/trader", payload);
+
+        setSuccess("Product created successfully.");
+      }
+
+      // Reset form
       setForm({
         name: "",
         description: "",
@@ -73,18 +104,104 @@ function TraderProducts() {
         isActive: true,
       });
 
-      setSuccess("Product created successfully.");
+      setEditingId(null);
+
+      // Refresh products
+      await fetchProducts();
+    } catch (error) {
+      setError(
+        error.response?.data?.message ||
+          (editingId
+            ? "Unable to update product."
+            : "Unable to create product.")
+      );
+    } finally {
+      setCreating(false);
+      setUpdating(false);
+    }
+  };
+
+  // ============================================================
+  // EDIT PRODUCT
+  // ============================================================
+
+  const handleEdit = (product) => {
+    setEditingId(product._id);
+
+    setForm({
+      name: product.name || "",
+      description: product.description || "",
+      basePrice: product.basePrice ?? "",
+      isActive: Boolean(product.isActive),
+    });
+
+    setError("");
+    setSuccess("");
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
+
+  // ============================================================
+  // CANCEL EDIT
+  // ============================================================
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+
+    setForm({
+      name: "",
+      description: "",
+      basePrice: "",
+      isActive: true,
+    });
+
+    setError("");
+    setSuccess("");
+  };
+
+  // ============================================================
+  // DELETE PRODUCT
+  // ============================================================
+
+  const handleDelete = async (productId) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this product?"
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setDeletingId(productId);
+      setError("");
+      setSuccess("");
+
+      await api.delete(`/products/trader/${productId}`);
+
+      setSuccess("Product deleted successfully.");
+
+      // If deleting the product currently being edited,
+      // cancel edit mode.
+      if (editingId === productId) {
+        handleCancelEdit();
+      }
 
       await fetchProducts();
     } catch (error) {
       setError(
         error.response?.data?.message ||
-          "Unable to create product."
+          "Unable to delete product."
       );
     } finally {
-      setCreating(false);
+      setDeletingId(null);
     }
   };
+
+  // ============================================================
+  // SEARCH
+  // ============================================================
 
   const filteredProducts = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -164,7 +281,7 @@ function TraderProducts() {
       </header>
 
       {/* =====================================================
-          FEEDBACK
+          ERROR
       ====================================================== */}
 
       {error && (
@@ -191,6 +308,10 @@ function TraderProducts() {
         </div>
       )}
 
+      {/* =====================================================
+          SUCCESS
+      ====================================================== */}
+
       {success && (
         <div className="flex items-center justify-between rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-4">
 
@@ -216,7 +337,7 @@ function TraderProducts() {
       )}
 
       {/* =====================================================
-          CREATE PRODUCT
+          CREATE / EDIT PRODUCT
       ====================================================== */}
 
       <section className="overflow-hidden rounded-2xl border border-white/10 bg-[#050505]">
@@ -228,17 +349,23 @@ function TraderProducts() {
           <div className="flex items-center gap-4">
 
             <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-sm text-slate-400">
-              +
+              {editingId ? "✎" : "+"}
             </div>
 
             <div>
+
               <p className="text-[10px] uppercase tracking-[0.18em] text-slate-600">
-                Catalog management
+                {editingId
+                  ? "Catalog management · Editing"
+                  : "Catalog management"}
               </p>
 
               <h2 className="mt-1 text-lg font-semibold text-white">
-                Add a product
+                {editingId
+                  ? "Edit product"
+                  : "Add a product"}
               </h2>
+
             </div>
 
           </div>
@@ -326,7 +453,7 @@ function TraderProducts() {
 
           </div>
 
-          {/* Active toggle + submit */}
+          {/* Active toggle + buttons */}
 
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between md:col-span-2">
 
@@ -356,23 +483,41 @@ function TraderProducts() {
 
             </label>
 
-            <button
-              type="submit"
-              disabled={creating}
-              className="rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-black transition duration-200 hover:bg-slate-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {creating ? (
-                <span className="inline-flex items-center gap-2">
+            <div className="flex flex-col gap-3 sm:flex-row">
 
-                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-400 border-t-black" />
-
-                  Creating...
-
-                </span>
-              ) : (
-                "Create Product"
+              {editingId && (
+                <button
+                  type="button"
+                  onClick={handleCancelEdit}
+                  className="rounded-xl border border-white/10 bg-white/[0.03] px-5 py-3.5 text-sm font-medium text-slate-400 transition hover:bg-white/[0.06] hover:text-white active:scale-[0.98]"
+                >
+                  Cancel
+                </button>
               )}
-            </button>
+
+              <button
+                type="submit"
+                disabled={creating || updating}
+                className="rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-black transition duration-200 hover:bg-slate-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {creating || updating ? (
+                  <span className="inline-flex items-center gap-2">
+
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-400 border-t-black" />
+
+                    {editingId
+                      ? "Updating..."
+                      : "Creating..."}
+
+                  </span>
+                ) : (
+                  editingId
+                    ? "Save Changes"
+                    : "Create Product"
+                )}
+              </button>
+
+            </div>
 
           </div>
 
@@ -389,6 +534,7 @@ function TraderProducts() {
         <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
 
           <div>
+
             <p className="text-[10px] uppercase tracking-[0.18em] text-slate-600">
               Inventory
             </p>
@@ -400,6 +546,7 @@ function TraderProducts() {
             <p className="mt-1 text-xs text-slate-600">
               Products managed by your trader account.
             </p>
+
           </div>
 
           {!loading && products.length > 0 && (
@@ -446,7 +593,7 @@ function TraderProducts() {
             {[1, 2, 3, 4, 5, 6].map((item) => (
               <div
                 key={item}
-                className="h-[285px] animate-pulse rounded-2xl border border-white/10 bg-[#050505]"
+                className="h-[340px] animate-pulse rounded-2xl border border-white/10 bg-[#050505]"
               />
             ))}
 
@@ -486,6 +633,7 @@ function TraderProducts() {
             )}
 
           </div>
+
         ) : (
 
           /* =================================================
@@ -498,7 +646,7 @@ function TraderProducts() {
 
               <article
                 key={product._id}
-                className="group relative flex min-h-[285px] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#050505] p-5 transition duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-[#080808] hover:shadow-2xl hover:shadow-black"
+                className="group relative flex min-h-[340px] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#050505] p-5 transition duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-[#080808] hover:shadow-2xl hover:shadow-black"
               >
 
                 {/* Glow */}
@@ -559,11 +707,39 @@ function TraderProducts() {
 
                 </div>
 
+                {/* Actions */}
+
+                <div className="relative mt-4 grid grid-cols-2 gap-3">
+
+                  <button
+                    type="button"
+                    onClick={() => handleEdit(product)}
+                    className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-xs font-medium text-slate-300 transition hover:border-white/20 hover:bg-white/[0.07] hover:text-white active:scale-[0.98]"
+                  >
+                    Edit
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={deletingId === product._id}
+                    onClick={() =>
+                      handleDelete(product._id)
+                    }
+                    className="rounded-xl border border-red-500/20 bg-red-500/[0.03] px-4 py-3 text-xs font-medium text-red-300 transition hover:bg-red-500/[0.08] hover:text-red-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {deletingId === product._id
+                      ? "Deleting..."
+                      : "Delete"}
+                  </button>
+
+                </div>
+
               </article>
 
             ))}
 
           </div>
+
         )}
 
       </section>

@@ -1,8 +1,10 @@
 import axios from "axios";
 import useAuthStore from "../store/authStore";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: API_URL,
   headers: {
     "Content-Type": "application/json",
   },
@@ -14,6 +16,7 @@ api.interceptors.request.use(
     const accessToken = useAuthStore.getState().accessToken;
 
     if (accessToken) {
+      config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
 
@@ -21,6 +24,9 @@ api.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
+
+// Keep only one refresh request running at a time
+let refreshPromise = null;
 
 // Handle expired access tokens
 api.interceptors.response.use(
@@ -35,9 +41,12 @@ api.interceptors.response.use(
 
     const isAuthRequest =
       originalRequest.url?.includes("/auth/login") ||
-      originalRequest.url?.includes("/auth/refresh-token");
+      originalRequest.url?.includes("/auth/register") ||
+      originalRequest.url?.includes("/auth/refresh-token") ||
+      originalRequest.url?.includes("/auth/forgot-password") ||
+      originalRequest.url?.includes("/auth/reset-password");
 
-    // Do not refresh authentication requests
+    // Only attempt refresh for 401 responses
     if (
       error.response?.status !== 401 ||
       originalRequest._retry ||
@@ -48,45 +57,62 @@ api.interceptors.response.use(
 
     originalRequest._retry = true;
 
-    const {
-      refreshToken,
-      updateAccessToken,
-      logout,
-    } = useAuthStore.getState();
+    const { refreshToken, updateTokens, logout } =
+      useAuthStore.getState();
 
-    // No refresh token means the session is actually unavailable
+    // No refresh token = session is unavailable
     if (!refreshToken) {
       logout();
       return Promise.reject(error);
     }
 
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/auth/refresh-token`,
-        {
-          refreshToken,
-        }
-      );
+      // If another request is already refreshing,
+      // wait for that same refresh request.
+      if (!refreshPromise) {
+        refreshPromise = axios
+          .post(`${API_URL}/auth/refresh-token`, {
+            refreshToken,
+          })
+          .then((response) => {
+            const {
+              accessToken,
+              refreshToken: newRefreshToken,
+            } = response.data;
 
-      const { accessToken } = response.data;
+            if (!accessToken) {
+              throw new Error(
+                "No access token returned from refresh endpoint."
+              );
+            }
 
-      if (!accessToken) {
-        throw new Error("No access token returned from refresh endpoint.");
+            // IMPORTANT:
+            // Save BOTH tokens because the backend can rotate
+            // the refresh token.
+            updateTokens(accessToken, newRefreshToken);
+
+            return {
+              accessToken,
+              refreshToken: newRefreshToken,
+            };
+          })
+          .finally(() => {
+            refreshPromise = null;
+          });
       }
 
-      updateAccessToken(accessToken);
+      const { accessToken } = await refreshPromise;
 
+      // Retry original request with new access token
       originalRequest.headers = originalRequest.headers || {};
       originalRequest.headers.Authorization =
         `Bearer ${accessToken}`;
 
-      // Retry the original request
       return api(originalRequest);
-
     } catch (refreshError) {
       console.error("Token refresh failed:", refreshError);
 
-      // Only logout when the refresh token is actually invalid/expired.
+      // Refresh token is invalid/expired/rejected
       if (
         refreshError.response?.status === 401 ||
         refreshError.response?.status === 403
@@ -94,7 +120,7 @@ api.interceptors.response.use(
         logout();
       }
 
-      // For server errors such as 500, don't immediately logout.
+      // Do not immediately logout on server errors such as 500
       return Promise.reject(refreshError);
     }
   }
