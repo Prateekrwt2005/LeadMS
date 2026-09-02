@@ -8,6 +8,7 @@ const useAuthStore = create(
       accessToken: null,
       refreshToken: null,
       isAuthenticated: false,
+      hasHydrated: false,
 
       login: (data) => {
         set({
@@ -33,9 +34,21 @@ const useAuthStore = create(
           isAuthenticated: false,
         });
       },
+
+      setHasHydrated: (hasHydrated) => {
+        set({ hasHydrated });
+      },
     }),
     {
       name: "leadms-auth",
+
+      onRehydrateStorage: () => (state, error) => {
+        if (error) {
+          console.error("Auth state hydration failed:", error);
+        }
+
+        state?.setHasHydrated(true);
+      },
     }
   )
 );

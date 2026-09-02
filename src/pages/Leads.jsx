@@ -35,6 +35,9 @@ function Leads() {
 
   const [creating, setCreating] = useState(false);
 
+  // Currently selected lead for the details modal
+  const [selectedLead, setSelectedLead] = useState(null);
+
   const fetchInProgress = useRef(false);
 
   const fetchLeads = async () => {
@@ -50,7 +53,7 @@ function Leads() {
         timeout: 15000,
       });
 
-      setLeads(response.data);
+      setLeads(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error("Failed to load leads:", error);
 
@@ -164,6 +167,29 @@ function Leads() {
       (lead) =>
         (lead.status || "new").toLowerCase() === status
     ).length;
+  };
+
+  const getAssignedUserName = (lead) => {
+    if (!lead?.assignedTo) {
+      return "Not assigned";
+    }
+
+    if (typeof lead.assignedTo === "string") {
+      return lead.assignedTo;
+    }
+
+    const fullName = [
+      lead.assignedTo.firstName,
+      lead.assignedTo.lastName,
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+    return (
+      fullName ||
+      lead.assignedTo.email ||
+      "Assigned"
+    );
   };
 
   return (
@@ -610,6 +636,7 @@ function Leads() {
 
                     <button
                       type="button"
+                      onClick={() => setSelectedLead(lead)}
                       className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 transition group-hover:text-white"
                     >
                       View
@@ -628,6 +655,141 @@ function Leads() {
         )}
 
       </section>
+
+      {/* =====================================================
+          LEAD DETAILS MODAL
+      ====================================================== */}
+
+      {selectedLead && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-5 backdrop-blur-sm"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) {
+              setSelectedLead(null);
+            }
+          }}
+        >
+          <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-white/10 bg-[#080808] shadow-2xl">
+
+            {/* Modal header */}
+
+            <div className="flex items-start justify-between border-b border-white/[0.08] px-6 py-5">
+
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.18em] text-slate-600">
+                  Lead Details
+                </p>
+
+                <h2 className="mt-2 text-xl font-semibold text-white">
+                  {selectedLead.customerName}
+                </h2>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedLead(null)}
+                className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 text-lg text-slate-500 transition hover:bg-white/5 hover:text-white"
+                aria-label="Close lead details"
+              >
+                ×
+              </button>
+
+            </div>
+
+            {/* Modal body */}
+
+            <div className="space-y-5 px-6 py-6">
+
+              {/* Email */}
+
+              <div>
+                <p className="text-xs text-slate-600">
+                  Customer email
+                </p>
+
+                <p className="mt-1 text-sm text-white">
+                  {selectedLead.customerEmail || "Not provided"}
+                </p>
+              </div>
+
+              {/* Phone */}
+
+              <div>
+                <p className="text-xs text-slate-600">
+                  Customer phone
+                </p>
+
+                <p className="mt-1 text-sm text-white">
+                  {selectedLead.customerPhone || "Not provided"}
+                </p>
+              </div>
+
+              {/* Status */}
+
+              <div>
+                <p className="text-xs text-slate-600">
+                  Status
+                </p>
+
+                <span
+                  className={`mt-2 inline-flex rounded-full border px-3 py-1.5 text-xs font-medium capitalize ${
+                    statusStyles[
+                      (selectedLead.status || "new").toLowerCase()
+                    ] ||
+                    "border-white/10 bg-white/[0.04] text-slate-400"
+                  }`}
+                >
+                  {selectedLead.status || "new"}
+                </span>
+              </div>
+
+              {/* Assigned user */}
+
+              <div>
+                <p className="text-xs text-slate-600">
+                  Assigned to
+                </p>
+
+                <p className="mt-1 text-sm text-white">
+                  {getAssignedUserName(selectedLead)}
+                </p>
+              </div>
+
+              {/* Created date */}
+
+              <div>
+                <p className="text-xs text-slate-600">
+                  Created
+                </p>
+
+                <p className="mt-1 text-sm text-white">
+                  {selectedLead.createdAt
+                    ? new Date(
+                        selectedLead.createdAt
+                      ).toLocaleString()
+                    : "Not available"}
+                </p>
+              </div>
+
+            </div>
+
+            {/* Modal footer */}
+
+            <div className="flex justify-end border-t border-white/[0.08] px-6 py-4">
+
+              <button
+                type="button"
+                onClick={() => setSelectedLead(null)}
+                className="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-slate-200"
+              >
+                Close
+              </button>
+
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );

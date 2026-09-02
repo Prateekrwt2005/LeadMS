@@ -47,6 +47,18 @@ function Quotes() {
   }, []);
 
   const handleQuantityChange = (productId, quantity) => {
+    // Allow the input to be completely empty.
+    if (quantity === "") {
+      setSelectedProducts((current) => ({
+        ...current,
+        [productId]: "",
+      }));
+
+      setQuote(null);
+      setSuccess("");
+      return;
+    }
+
     const value = Math.max(0, Number(quantity) || 0);
 
     setSelectedProducts((current) => ({
@@ -60,14 +72,14 @@ function Quotes() {
 
   const selectedProductCount = useMemo(() => {
     return Object.values(selectedProducts).filter(
-      (quantity) => quantity > 0
+      (quantity) => Number(quantity) > 0
     ).length;
   }, [selectedProducts]);
 
   const estimatedSubtotal = useMemo(() => {
     return products.reduce((total, product) => {
       const quantity =
-        selectedProducts[product._id] || 0;
+        Number(selectedProducts[product._id]) || 0;
 
       return (
         total +
@@ -88,10 +100,10 @@ function Quotes() {
     const productsForQuote = Object.entries(
       selectedProducts
     )
-      .filter(([, quantity]) => quantity > 0)
+      .filter(([, quantity]) => Number(quantity) > 0)
       .map(([productId, quantity]) => ({
         productId,
-        quantity,
+        quantity: Number(quantity),
       }));
 
     if (productsForQuote.length === 0) {
@@ -119,6 +131,9 @@ function Quotes() {
             : lead
         )
       );
+
+      // Keep selected lead data updated as well.
+      setSelectedLead(response.data);
 
       setSuccess("Quote generated successfully.");
     } catch (error) {
@@ -193,6 +208,7 @@ function Quotes() {
       {/* Progress */}
       <div className="grid gap-3 sm:grid-cols-3">
 
+        {/* Step 1 */}
         <div
           className={`rounded-xl border p-4 ${
             selectedLead
@@ -215,6 +231,7 @@ function Quotes() {
           </p>
         </div>
 
+        {/* Step 2 */}
         <div
           className={`rounded-xl border p-4 ${
             selectedProductCount > 0
@@ -235,6 +252,7 @@ function Quotes() {
           </p>
         </div>
 
+        {/* Step 3 */}
         <div
           className={`rounded-xl border p-4 ${
             quote
@@ -353,14 +371,19 @@ function Quotes() {
               </div>
             ) : (
               products.map((product) => {
+
+                // Blank when the product has not been selected yet.
                 const quantity =
-                  selectedProducts[product._id] || 0;
+                  selectedProducts[product._id] ?? "";
+
+                const numericQuantity =
+                  Number(quantity) || 0;
 
                 return (
                   <div
                     key={product._id}
                     className={`rounded-xl border p-4 transition ${
-                      quantity > 0
+                      numericQuantity > 0
                         ? "border-indigo-500/40 bg-indigo-500/5"
                         : "border-slate-800"
                     }`}
@@ -395,11 +418,11 @@ function Quotes() {
 
                     </div>
 
-                    {quantity > 0 && (
+                    {numericQuantity > 0 && (
                       <div className="mt-3 flex justify-between border-t border-slate-800 pt-3 text-xs">
 
                         <span className="text-slate-500">
-                          {quantity} ×{" "}
+                          {numericQuantity} ×{" "}
                           {formatCurrency(
                             product.basePrice
                           )}
@@ -409,7 +432,7 @@ function Quotes() {
                           {formatCurrency(
                             Number(
                               product.basePrice || 0
-                            ) * quantity
+                            ) * numericQuantity
                           )}
                         </span>
 
@@ -454,7 +477,6 @@ function Quotes() {
             </button>
 
           </div>
-
         </section>
 
         {/* Preview */}
@@ -476,6 +498,7 @@ function Quotes() {
 
           {!quote ? (
             <div className="flex min-h-[400px] items-center justify-center p-8 text-center">
+
               <div>
 
                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-800 text-slate-500">
@@ -492,12 +515,14 @@ function Quotes() {
                 </p>
 
               </div>
+
             </div>
           ) : (
             <div className="space-y-6 p-5">
 
               {/* Customer */}
               <div>
+
                 <p className="text-xs text-slate-500">
                   Customer
                 </p>
@@ -509,6 +534,7 @@ function Quotes() {
                 <p className="mt-1 text-xs text-slate-500">
                   {selectedLead?.customerEmail}
                 </p>
+
               </div>
 
               {/* Breakdown */}
